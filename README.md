@@ -7,21 +7,21 @@
 需要 Python 3.9 及以上。推荐用 [pipx](https://pipx.pypa.io/) 安装（会自动放进独立环境并把命令加到 PATH）：
 
 ```bash
-pipx install git+https://github.com/<你的用户名>/oral-quiz.git
+pipx install git+https://github.com/Suiich/Tests.git
 ```
 
 也可以直接用 pip：
 
 ```bash
-pip install git+https://github.com/<你的用户名>/oral-quiz.git
+pip install git+https://github.com/Suiich/Tests.git
 ```
 
 更新到最新题库：
 
 ```bash
-pipx upgrade oral-quiz
+pipx upgrade Tests
 # 或
-pip install --upgrade git+https://github.com/<你的用户名>/oral-quiz.git
+pip install --upgrade git+https://github.com/Suiich/Tests.git
 ```
 
 ## 使用
