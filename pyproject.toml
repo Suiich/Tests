@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oral-quiz"
+version = "1.0.0"
+description = "口腔医学知识点终端答题系统，按章节练习或全部随机抽题"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+exercise_enter = "oral_quiz.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+oral_quiz = ["questions/*.json"]

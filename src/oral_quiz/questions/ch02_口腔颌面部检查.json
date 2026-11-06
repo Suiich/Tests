@@ -1,0 +1,18 @@
+{
+  "chapter": 2,
+  "chapter_title": "口腔颌面部检查",
+  "source_pages": "11-12",
+  "questions": [
+    {"id": "ch02-001", "section": "常用检查器械", "question": "下列哪项不属于口腔内常规检查的常用器械？", "options": ["口镜", "探针", "牙钳"], "answer": 2, "source": "口腔内常规检查常用检查器械：镊子、口镜、探针、其他（挖匙）", "explanation": "牙钳是拔牙器械。"},
+    {"id": "ch02-002", "section": "牙齿松动度分级", "question": "以毫米分级，牙齿松动幅度1~2mm属于？", "options": ["Ⅰ度松动", "Ⅱ度松动", "Ⅲ度松动"], "answer": 1, "source": "Ⅰ度松动：≤1mm；Ⅱ度松动：1-2mm；Ⅲ度松动：≥2mm", "explanation": "1~2mm为Ⅱ度。"},
+    {"id": "ch02-003", "section": "牙齿松动度分级", "question": "以牙冠松动方向分级，Ⅲ度松动是指？", "options": ["仅唇（颊）舌（腭）向松动", "Ⅰ度+近远中向松动", "Ⅱ度+垂直向松动"], "answer": 2, "source": "Ⅰ度松动：唇（颊）舌（腭）向松动；Ⅱ度松动：Ⅰ度+伴近远中向松动；Ⅲ度松动：Ⅱ度+垂直向松动", "explanation": "出现垂直向松动即Ⅲ度。"},
+    {"id": "ch02-004", "section": "牙齿松动度分级", "question": "以毫米分级，Ⅲ度松动的幅度是？", "options": ["≤1mm", "1~2mm", "≥2mm"], "answer": 2, "source": "Ⅲ度松动：≥2mm", "explanation": "≥2mm为Ⅲ度。"},
+    {"id": "ch02-005", "section": "颞下颌关节检查", "question": "正常张口度是？", "options": ["2~2.5cm", "3~4.5cm", "大于4.5cm"], "answer": 1, "source": "正常张口度：3~4.5cm；轻度受限：2~2.5cm；中度受限：1~2cm；重度受限：<1cm；张口过大：4.5cm", "explanation": "正常3~4.5cm。"},
+    {"id": "ch02-006", "section": "颞下颌关节检查", "question": "张口度为1~2cm属于？", "options": ["轻度受限", "中度受限", "重度受限"], "answer": 1, "source": "中度受限：1~2cm", "explanation": "轻度2~2.5cm，中度1~2cm，重度<1cm。"},
+    {"id": "ch02-007", "section": "颞下颌关节检查", "question": "张口度小于1cm属于？", "options": ["中度受限", "重度受限", "正常"], "answer": 1, "source": "重度受限：<1cm", "explanation": "<1cm为重度受限。"},
+    {"id": "ch02-008", "section": "张口度的测量", "question": "张口度的测量是指？", "options": ["上、下中切牙切缘之间的距离", "上、下唇之间的距离", "上、下第一磨牙之间的距离"], "answer": 0, "source": "张口度的测量是指上、下中切牙切缘之间的距离", "explanation": "测上、下中切牙切缘间距。"},
+    {"id": "ch02-009", "section": "张口度的测量", "question": "临床上可用被检查者哪几指末节的宽度粗略衡量正常张口度？", "options": ["拇指、示指", "示指、中指、无名指", "中指、无名指、小指"], "answer": 1, "source": "被检查者示指、中指、无名指三指末节的宽度", "explanation": "正常张口约为三横指。"},
+    {"id": "ch02-010", "section": "牙周检查", "question": "牙周探诊的最佳力量是？", "options": ["5~10g", "20~25g", "50g以上"], "answer": 1, "source": "牙周探诊的最佳力量是：20-25g（2018级选择原题）", "explanation": "20~25g，过大易穿入结合上皮。"},
+    {"id": "ch02-011", "section": "牙周检查", "question": "牙周袋深度测量是从哪里到哪里？", "options": ["龈缘到袋底", "釉牙骨质界到袋底", "龈缘到根尖"], "answer": 0, "source": "牙周袋的深度测量（补充）：龈缘-袋底，一般深度不超过2-3mm", "explanation": "探诊深度为龈缘至袋底。"}
+  ]
+}
