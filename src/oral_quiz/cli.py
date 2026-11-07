@@ -2,20 +2,29 @@
 """口腔医学终端答题系统
 
 安装后在终端输入：
-  exercise_enter  进入答题（选择章节）
+  exercise_enter  进入答题（选择章节，再选择级别）
   exercise_exit   在程序内任何位置退出
-答题时输入 A/B/C（或 1/2/3），输入 q 返回章节选择。
+单选输入一个字母；多选输入全部正确字母；排序按顺序连写全部字母。
+字母也可换成序号（如 134）。输入 q 返回上一级。
 
 可设置环境变量 ORAL_QUIZ_DIR 指向自己的题库目录（ch*.json）。
 """
 import json
 import os
 import random
+import re
 import sys
 from importlib import resources
 
-LETTERS = "ABC"
+LETTERS = "ABCDEFGH"
 DEFAULT_TOTAL_COUNT = 30
+TYPE_LABEL = {"single": "单选", "multi": "多选", "order": "排序"}
+LEVELS = {1: "I级（旧题）", 2: "II级（新题）", 3: "III级（排序）", 4: "IV级（多选）"}
+INPUT_HINT = {
+    "single": "请输入一个选项字母",
+    "multi": "请输入全部正确选项的字母，可连写，不要重复",
+    "order": "请把全部字母按顺序连写，每个字母一次",
+}
 
 ENTER_CMD = "exercise_enter"
 EXIT_CMD = "exercise_exit"
@@ -76,6 +85,30 @@ def question_files():
     return [(e.name, lambda e=e: e.read_text(encoding="utf-8")) for e in entries]
 
 
+def question_type(q):
+    return q.get("type", "single")
+
+
+def question_level(q):
+    """未标注级别的题目是基础题，属于 I 级。"""
+    return q.get("level", 1)
+
+
+def is_valid(q):
+    n = len(q.get("options", []))
+    answer = q.get("answer")
+    qtype = question_type(q)
+    if not 2 <= n <= len(LETTERS) or question_level(q) not in LEVELS:
+        return False
+    if qtype == "single":
+        return isinstance(answer, int) and 0 <= answer < n
+    if not isinstance(answer, list):
+        return False
+    if qtype == "multi":
+        return len(answer) > 0 and len(set(answer)) == len(answer) and all(a in range(n) for a in answer)
+    return qtype == "order" and sorted(answer) == list(range(n))
+
+
 def load_chapters():
     chapters = []
     for name, read in question_files():
@@ -84,8 +117,7 @@ def load_chapters():
         except (OSError, json.JSONDecodeError) as e:
             print(red(f"读取失败，已跳过：{name}（{e}）"))
             continue
-        questions = [q for q in data.get("questions", [])
-                     if len(q.get("options", [])) == 3 and q.get("answer") in (0, 1, 2)]
+        questions = [q for q in data.get("questions", []) if is_valid(q)]
         if questions:
             chapters.append({
                 "chapter": data.get("chapter"),
@@ -107,21 +139,59 @@ def chapter_label(n):
     return f"第{n}章"
 
 
-def shuffled_options(q):
-    """打乱选项顺序，返回 (选项列表, 正确答案的新位置)。"""
-    order = [0, 1, 2]
+def shuffled_view(q):
+    """打乱选项，返回 (选项列表, 正确答案的新位置)；排序题保证不会恰好是正确顺序。"""
+    order = list(range(len(q["options"])))
     random.shuffle(order)
+    while question_type(q) == "order" and order == q["answer"]:
+        random.shuffle(order)
     options = [q["options"][i] for i in order]
-    return options, order.index(q["answer"])
+    if question_type(q) == "single":
+        return options, order.index(q["answer"])
+    return options, [order.index(a) for a in q["answer"]]
 
 
-def parse_choice(text):
-    t = text.strip().upper()
-    if t in ("A", "B", "C"):
-        return "ABC".index(t)
-    if t in ("1", "2", "3"):
-        return int(t) - 1
-    return None
+def parse_letters(text, n):
+    """把 “ACD”“a c d”“A,C,D”“134” 解析为下标列表；无效或重复时返回 None。"""
+    picked = []
+    for ch in re.sub(r"[\s,，、]", "", text).upper():
+        if ch in LETTERS[:n]:
+            i = LETTERS.index(ch)
+        elif ch.isdigit() and 1 <= int(ch) <= n:
+            i = int(ch) - 1
+        else:
+            return None
+        if i in picked:
+            return None
+        picked.append(i)
+    return picked or None
+
+
+def parse_answer(qtype, text, n):
+    picked = parse_letters(text, n)
+    if picked is None:
+        return None
+    if qtype == "single" and len(picked) != 1:
+        return None
+    if qtype == "order" and len(picked) != n:
+        return None
+    return picked
+
+
+def is_correct(qtype, picked, answer):
+    if qtype == "single":
+        return picked[0] == answer
+    if qtype == "multi":
+        return set(picked) == set(answer)
+    return picked == answer
+
+
+def answer_text(qtype, options, answer):
+    if qtype == "single":
+        return f"{LETTERS[answer]}. {options[answer]}"
+    if qtype == "multi":
+        return "；".join(f"{LETTERS[a]}. {options[a]}" for a in sorted(answer))
+    return " → ".join(f"{LETTERS[a]}. {options[a]}" for a in answer)
 
 
 def run_quiz(title, questions):
@@ -133,17 +203,18 @@ def run_quiz(title, questions):
 
     print()
     print(bold(f"====== {title}（共 {total} 题）======"))
-    print(dim("输入 A/B/C 作答，q 返回章节选择，exercise_exit 退出"))
+    print(dim("单选输入一个字母；多选输入全部正确字母；排序按顺序连写全部字母。q 返回，exercise_exit 退出"))
 
     for idx, q in enumerate(questions, 1):
-        options, answer_pos = shuffled_options(q)
+        qtype = question_type(q)
+        options, answer = shuffled_view(q)
         print()
         where = q.get("_chapter_title")
-        head = f"[{idx}/{total}]"
+        head = f"[{idx}/{total}] 【{TYPE_LABEL[qtype]}】"
         if where:
-            head += f" {where}"
+            head += f"{where} · "
         if q.get("section"):
-            head += f" · {q['section']}"
+            head += q["section"]
         print(cyan(head))
         print(bold(q["question"]))
         for i, opt in enumerate(options):
@@ -153,13 +224,13 @@ def run_quiz(title, questions):
             text = ask("你的答案：")
             if text.lower() == "q":
                 raise BackToMenu
-            choice = parse_choice(text)
-            if choice is not None:
+            picked = parse_answer(qtype, text, len(options))
+            if picked is not None:
                 break
-            print(yellow("请输入 A、B 或 C（也可输入 1/2/3）"))
+            print(yellow(INPUT_HINT[qtype]))
 
-        right_text = f"{LETTERS[answer_pos]}. {options[answer_pos]}"
-        if choice == answer_pos:
+        right_text = answer_text(qtype, options, answer)
+        if is_correct(qtype, picked, answer):
             correct += 1
             print(green("✔ 回答正确"))
         else:
@@ -168,7 +239,8 @@ def run_quiz(title, questions):
         if q.get("explanation"):
             print(dim("解析：") + q["explanation"])
         if q.get("source"):
-            print(dim("原文：" + q["source"]))
+            label = "原文" if question_level(q) == 1 else "来源"
+            print(dim(f"{label}：" + q["source"]))
 
     print()
     rate = correct * 100 // total if total else 0
@@ -178,6 +250,47 @@ def run_quiz(title, questions):
         for q, right_text in wrong_list:
             print(f"  · {q['question']}")
             print(f"    → {green(right_text)}")
+
+
+def ask_count(total):
+    """总章抽题数量：回车默认，all 为全部。"""
+    raw = ask(f"抽题数量（回车默认 {DEFAULT_TOTAL_COUNT}，输入 all 为全部）：")
+    if raw.lower() == "all":
+        return total
+    count = int(raw) if raw.isdigit() and int(raw) > 0 else DEFAULT_TOTAL_COUNT
+    return min(count, total)
+
+
+def level_menu(title, questions, sample=False):
+    """选择随机或某一级别后答题；q 返回章节选择。sample 为 True 时先询问抽题数量。"""
+    groups = [("随机", questions)]
+    for level, label in LEVELS.items():
+        groups.append((label, [q for q in questions if question_level(q) == level]))
+
+    while True:
+        print()
+        print(bold(f"========== {title} =========="))
+        for i, (label, qs) in enumerate(groups):
+            print(f"  {i}. {label}（{len(qs)} 题）")
+        print(dim(f"输入序号开始答题，q 返回章节选择，{EXIT_CMD} 退出"))
+
+        text = ask("请选择级别：")
+        if text.lower() == "q":
+            return
+        if not text.isdigit() or int(text) >= len(groups):
+            print(yellow("无效的序号，请重新输入"))
+            continue
+        label, qs = groups[int(text)]
+        if not qs:
+            print(yellow("该级别暂无题目"))
+            continue
+
+        try:
+            if sample:
+                qs = random.sample(qs, ask_count(len(qs)))
+            run_quiz(f"{title} · {label}", qs)
+        except BackToMenu:
+            print(yellow("已返回级别选择"))
 
 
 def chapter_menu(chapters):
@@ -202,21 +315,11 @@ def chapter_menu(chapters):
             continue
         n = int(text)
 
-        try:
-            if n == 0:
-                count = DEFAULT_TOTAL_COUNT
-                raw = ask(f"抽题数量（回车默认 {DEFAULT_TOTAL_COUNT}，输入 all 为全部）：")
-                if raw.lower() == "all":
-                    count = len(all_questions)
-                elif raw.isdigit() and int(raw) > 0:
-                    count = int(raw)
-                count = min(count, len(all_questions))
-                run_quiz("总章 · 随机抽题", random.sample(all_questions, count))
-            else:
-                c = chapters[n - 1]
-                run_quiz(f"{chapter_label(c['chapter'])} {c['title']}", c["questions"])
-        except BackToMenu:
-            print(yellow("已返回章节选择"))
+        if n == 0:
+            level_menu("总章", all_questions, sample=True)
+        else:
+            c = chapters[n - 1]
+            level_menu(f"{chapter_label(c['chapter'])} {c['title']}", c["questions"])
 
 
 def main():
